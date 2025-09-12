@@ -1,21 +1,6 @@
-# DdTraceElixir
+# dd-trace-ex
 
-**TODO: Add description**
+`dd-trace-ex` is an Elixir library for tracing nd monitoring applications using Datadog
 
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `dd_trace_elixir` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:dd_trace_elixir, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/dd_trace_elixir>.
-
+> [!Important]
+> This project is not affiliated with Datadog. It is an individual effort to integrate Elixir with the Datadog toolset. Use at your own risk.
