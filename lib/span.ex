@@ -75,7 +75,7 @@ defmodule DDTrace.Span do
           integer()
         ) ::
           %__MODULE__{}
-  defp build_from_minimal(min_span, {high, low} = _trace_id, duration) do
+  def build_from_minimal(min_span, {high, low} = _trace_id, duration) do
     %__MODULE__{
       name: min_span.name,
       trace_id: low,
