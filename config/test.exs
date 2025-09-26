@@ -1,4 +1,4 @@
 import Config
 
 config :dd_trace_ex,
-  agent_module: DDTrace.AgentMock
+  agent_api_module: DDTrace.AgentAPIMock

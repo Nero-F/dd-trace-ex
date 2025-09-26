@@ -15,7 +15,7 @@ config :dd_trace_ex,
   agent_url: System.get_env("DD_TRACE_AGENT_URL", "http://localhost:8126"),
   agent_host: System.get_env("DD_AGENT_HOST", "127.0.0.7"),
   agent_port: System.get_env("DD_TRACE_AGENT_PORT", "8126") |> String.to_integer(),
-  agent_module: DDTrace.Agent,
+  agent_api_module: DDTrace.AgentAPI,
 
   # Unified Service Tagging
   version: System.get_env("DD_VERSION", nil),

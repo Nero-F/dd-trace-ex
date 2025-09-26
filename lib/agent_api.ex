@@ -1,10 +1,10 @@
-defmodule DDTrace.Agent.Behaviour do
+defmodule DDTrace.AgentAPI.Behaviour do
   alias DDTrace.Span
   @callback send_traces(span :: [Span.t()]) :: {:ok, Finch.Response.t()} | {:error, Exception.t()}
 end
 
-defmodule DDTrace.Agent do
-  @behaviour DDTrace.Agent.Behaviour
+defmodule DDTrace.AgentAPI do
+  @behaviour DDTrace.AgentAPI.Behaviour
 
   @headers [
     {"Content-Type", "application/json"},
