@@ -15,6 +15,7 @@ config :dd_trace_ex,
   agent_url: System.get_env("DD_TRACE_AGENT_URL", "http://localhost:8126"),
   agent_host: System.get_env("DD_AGENT_HOST", "127.0.0.7"),
   agent_port: System.get_env("DD_TRACE_AGENT_PORT", "8126") |> String.to_integer(),
+  agent_module: DDTrace.Agent,
 
   # Unified Service Tagging
   version: System.get_env("DD_VERSION", nil),
@@ -62,3 +63,5 @@ config :dd_trace_ex,
     System.get_env("DD_TRACE_BAGGAGE_MAX_BYTES", "8192") |> String.to_integer(),
   trace_baggage_tag_keys:
     System.get_env("DD_TRACE_BAGGAGE_TAG_KEYS", "user.id,session.id,account.id")
+
+import_config "#{config_env()}.exs"
