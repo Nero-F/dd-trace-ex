@@ -27,7 +27,8 @@ defmodule DdTraceEx.MixProject do
       {:finch, "~> 0.20"},
       {:ex_doc, "~> 0.34", only: :dev},
       {:jason, "~> 1.4"},
-      {:mox, "~> 1.0", only: :dev}
+      {:mox, "~> 1.0", only: :test},
+      {:bypass, "~> 2.1.0", only: :test}
     ]
   end
 

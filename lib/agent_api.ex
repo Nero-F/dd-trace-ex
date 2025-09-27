@@ -24,6 +24,5 @@ defmodule DDTrace.AgentAPI do
       body
     )
     |> Finch.request(DDFinch)
-    |> IO.inspect(label: "res")
   end
 end

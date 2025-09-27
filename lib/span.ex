@@ -54,6 +54,7 @@ defmodule DDTrace.Span do
           error: integer()
         }
 
+  @derive Jason.Encoder
   defstruct [
     :name,
     :trace_id,
@@ -81,10 +82,10 @@ defmodule DDTrace.Span do
       trace_id: low,
       span_id: min_span.span_id,
       parent_id: min_span.parent_id,
-      resource: min_span.opts[:resource],
-      service: min_span.opts[:service],
-      type: min_span.opts[:type] || "custom",
-      meta: base_metadata(min_span.opts[:meta], high),
+      resource: min_span.opts.resource,
+      service: min_span.opts.service,
+      type: min_span.opts.type || "custom",
+      meta: base_metadata(min_span.opts.meta, high),
       start: min_span.start,
       duration: duration
     }
@@ -92,6 +93,8 @@ defmodule DDTrace.Span do
 
   @spec base_metadata(string_map(), integer()) :: string_map()
   defp base_metadata(meta, high) do
+    meta = meta || %{}
+
     if high != 0 do
       meta |> Map.put("_dd.p.tid", high |> Integer.to_string(16) |> String.downcase())
     else
