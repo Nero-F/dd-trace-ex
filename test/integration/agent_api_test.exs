@@ -34,8 +34,6 @@ defmodule DDtrace.AgentAPITest do
       |> Plug.Conn.resp(200, "")
     end)
 
-    DDTrace.start(nil, nil)
-
     assert {:ok, response} =
              DDTrace.AgentAPI.send_traces(trace)
 

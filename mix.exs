@@ -16,7 +16,7 @@ defmodule DdTraceEx.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {DDTrace, []},
+      mod: mod(Mix.env()),
       extra_applications: [:logger]
     ]
   end
@@ -40,4 +40,7 @@ defmodule DdTraceEx.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_env), do: ["lib"]
+
+  defp mod(:test), do: []
+  defp mod(_env), do: {DDTrace, []}
 end
