@@ -1,6 +1,8 @@
 defmodule Integration.SpanCollectorTest do
   use ExUnit.Case
 
+  @agent_api_module Application.compile_env!(:dd_trace_ex, :agent_api_module)
+
   @span %DDTrace.Span{
     duration: 12345,
     name: "elixir APM client",
@@ -22,8 +24,7 @@ defmodule Integration.SpanCollectorTest do
     pid = start_supervised!({DDTrace.SpanCollector, [mode: :manual]})
     DDTrace.SpanCollector.add_span(@span)
 
-    expect(DDTrace.AgentAPIMock, :send_traces, fn _traces ->
-      # assert trace
+    expect(@agent_api_module, :send_traces, fn _traces ->
       send(test_pid, {:send_traces_called, ref})
       :ok
     end)

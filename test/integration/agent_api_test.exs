@@ -1,4 +1,5 @@
 defmodule DDtrace.AgentAPITest do
+  # @fake_agent_url Application.compile_env!(:dd_trace_ex, :agent_url)
   use ExUnit.Case
 
   setup do
@@ -15,7 +16,7 @@ defmodule DDtrace.AgentAPITest do
           duration: 12345,
           name: "elixir APM client",
           resource: "test",
-          service: "Integration test",
+          service: "AgentAPITest",
           span_id: 987_654_321,
           start: 0,
           trace_id: 123_456_789
@@ -31,12 +32,9 @@ defmodule DDtrace.AgentAPITest do
       assert body == enc_trace
 
       conn
-      |> Plug.Conn.resp(200, "")
+      |> Plug.Conn.resp(200, "OK\n")
     end)
 
-    assert {:ok, response} =
-             DDTrace.AgentAPI.send_traces(trace)
-
-    assert response.status == 200
+    assert {:ok, %Finch.Response{status: 200, body: "OK\n"}} = DDTrace.AgentAPI.send_traces(trace)
   end
 end

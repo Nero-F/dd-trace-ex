@@ -6,6 +6,8 @@ end
 defmodule DDTrace.AgentAPI do
   @behaviour DDTrace.AgentAPI.Behaviour
 
+  @default_agent_url Application.compile_env(:dd_trace_ex, :agent_url)
+
   @headers [
     {"Content-Type", "application/json"},
     {"Datadog-Meta-Lang", "elixir"},
@@ -13,9 +15,8 @@ defmodule DDTrace.AgentAPI do
   ]
 
   @impl true
-  def send_traces(spans) do
+  def send_traces(spans, agent_url \\ @default_agent_url) do
     body = [spans] |> Jason.encode!()
-    agent_url = Application.get_env(:dd_trace_ex, :agent_url)
 
     Finch.build(
       :put,
