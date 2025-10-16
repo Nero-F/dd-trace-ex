@@ -10,24 +10,24 @@ defmodule DDTrace.SpanCollector do
   @default_config [
     flush_interval: 5,
     max_buffer_size: 1_000,
-    max_retry: 3,
     circuit_breaker_threshold: 2,
-    circuit_breaker_timeout: 30_000,
-    agent_timeout: 5_000,
+    circuit_breaker_max_retry_delay: 30_000,
     backoff_base: 1_000
   ]
 
   defstruct [
+    :mode,
     :config,
-    :flush_timer,
     :spans_table,
     circuit_breaker: %{state: :closed, failure_count: 0, last_failure: nil, next_attempt: nil}
   ]
 
   defp load_config() do
-    :dd_trace_ex
-    |> Application.get_env(__MODULE__, [])
-    |> Keyword.merge(@default_config)
+    conf =
+      :dd_trace_ex
+      |> Application.get_env(__MODULE__, [])
+
+    Keyword.merge(@default_config, conf)
     |> Enum.into(%{})
   end
 
@@ -54,13 +54,14 @@ defmodule DDTrace.SpanCollector do
         {:write_concurrency, true}
       ])
 
-    case mode do
-      :periodic -> schedule_flush(config.flush_interval)
-      :manual -> :ok
+    cond do
+      mode == :periodic -> schedule_flush(config.flush_interval)
+      mode == :manual || mode == :semi_periodic -> :ok
     end
 
     {:ok,
      %__MODULE__{
+       mode: mode,
        config: config,
        spans_table: table
      }}
@@ -80,8 +81,18 @@ defmodule DDTrace.SpanCollector do
   @impl true
   def handle_info(:flush, state) do
     {_res, new_state} = flush_spans(state)
-    schedule_flush(new_state.config.flush_interval)
+
+    if state.mode == :semi_periodic || state.mode == :periodic do
+      schedule_flush(new_state.config.flush_interval)
+    end
+
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info({:cb_state, from}, state) do
+    GenServer.reply(from, state.circuit_breaker)
+    {:noreply, state}
   end
 
   defp maybe_flush_if_full(state) do
@@ -105,6 +116,7 @@ defmodule DDTrace.SpanCollector do
         {:skipped, update_state}
 
       :half_open ->
+        Logger.debug("Circuit Breaker half_open, trying recovery")
         try_recovery_flush(update_state)
 
       :closed ->
@@ -231,7 +243,12 @@ defmodule DDTrace.SpanCollector do
 
     next_attempt =
       if new_circuit_state == :open do
-        now + compute_backoff_delay(new_failure_count, state.config.backoff_base)
+        now +
+          compute_backoff_delay(
+            new_failure_count,
+            state.config.backoff_base,
+            state.config.circuit_breaker_max_retry_delay
+          )
       else
         nil
       end
@@ -249,10 +266,10 @@ defmodule DDTrace.SpanCollector do
     handle_failed_spans(failed_batch, updated_state)
   end
 
-  defp compute_backoff_delay(failure_count, base_delay) do
+  defp compute_backoff_delay(failure_count, base_delay, max_delay \\ 30_000) do
     (base_delay * :math.pow(2, failure_count - 1))
     |> trunc()
-    |> min(30_000)
+    |> min(max_delay)
   end
 
   defp handle_failed_spans(spans, state) do
@@ -281,9 +298,4 @@ defmodule DDTrace.SpanCollector do
         {:error, error}
     end
   end
-
-  # defp encode_msgpack(data) do
-  #   # à implémenter avec ExMsgpax ou similaire
-  #   Msgpax.pack!(data)
-  # end
 end
