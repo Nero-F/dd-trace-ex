@@ -42,21 +42,25 @@ defmodule Integration.SpanCollectorTest do
       pid = start_supervised!({DDTrace.SpanCollector, [mode: :semi_periodic]})
       DDTrace.SpanCollector.add_span(@span)
 
-      @agent_api_module 
-      |> expect( :send_traces, fn _traces -> {:error, "unexpected event occurs"} end)
-      |> expect( :send_traces, fn _traces -> {:error, "unexpected event occurs"} end)
-      |> expect( :send_traces, fn _traces -> {:error, "unexpected event occurs"} end)
+      @agent_api_module
+      |> expect(:send_traces, fn _traces ->
+        {:error, "unexpected event occurs", [@span.trace_id]}
+      end)
+      |> expect(:send_traces, fn _traces ->
+        {:error, "unexpected event occurs", [@span.trace_id]}
+      end)
+      |> expect(:send_traces, fn _traces ->
+        {:error, "unexpected event occurs", [@span.trace_id]}
+      end)
 
       send(pid, :flush)
       Process.send_after(pid, {:cb_state, {test_pid, ref}}, 50)
       assert_receive({^ref, circuit_breaker})
       assert circuit_breaker.state == :open
-
     end
   end
 
   describe "circuit_breaker Agent reachable after fail" do
-    @tag run: true
     test "circuit breaker recover after fails" do
       test_pid = self()
       ref = make_ref()
@@ -65,8 +69,11 @@ defmodule Integration.SpanCollectorTest do
       DDTrace.SpanCollector.add_span(@span)
 
       for _ <- 1..3 do
-        @agent_api_module 
-        |> expect( :send_traces, fn _traces -> {:error, "unexpected event occurs"} end)
+        @agent_api_module
+        |> expect(:send_traces, fn _traces ->
+          {:error, "unexpected event occurs", [@span.trace_id]}
+        end)
+
         send(pid, :flush)
       end
 
@@ -78,11 +85,59 @@ defmodule Integration.SpanCollectorTest do
 
       @agent_api_module |> expect(:send_traces, fn _traces -> {:ok, :resp} end)
       # Wait for circuit breaker timeout expiration
-      tt = System.monotonic_time(:millisecond) - circuit_breaker.next_attempt |> abs()
-      Process.send_after(pid, :flush, tt)
-      Process.send_after(pid, {:cb_state, {test_pid, ref}}, tt)
-      assert_receive({^ref, circuit_breaker}, tt + 1_000)
+      t = (System.monotonic_time(:millisecond) - circuit_breaker.next_attempt) |> abs()
+      Process.send_after(pid, :flush, t)
+      Process.send_after(pid, {:cb_state, {test_pid, ref}}, t)
+      assert_receive({^ref, circuit_breaker}, t + 1_000)
 
+      assert circuit_breaker.state == :closed
+    end
+  end
+
+  describe "Batch partially sent" do
+    test "Span collector tries to resend failed spans" do
+      test_pid = self()
+      ref = make_ref()
+
+      traces = [
+        @span,
+        %DDTrace.Span{
+          duration: 12345,
+          name: "elixir APM client",
+          resource: "test",
+          service: "Integration test",
+          span_id: 989_654_321,
+          start: 0,
+          trace_id: 125_456_789
+        },
+        %DDTrace.Span{
+          duration: 12345,
+          name: "elixir APM client",
+          resource: "test",
+          service: "Integration test",
+          span_id: 990_654_321,
+          start: 0,
+          trace_id: 127_456_789
+        }
+      ]
+
+      pid = start_supervised!({DDTrace.SpanCollector, [mode: :semi_periodic]})
+      Enum.each(traces, &DDTrace.SpanCollector.add_span/1)
+
+      @agent_api_module
+      |> expect(:send_traces, fn _traces ->
+        {:error, "unexpected event occurs", [125_456_789]}
+      end)
+      |> expect(:send_traces, fn _traces ->
+        {:error, "unexpected event occurs", [127_456_789]}
+      end)
+      |> expect(:send_traces, fn _traces ->
+        {:ok, :resp}
+      end)
+
+      send(pid, :flush)
+      Process.send_after(pid, {:cb_state, {test_pid, ref}}, 50)
+      assert_receive({^ref, circuit_breaker})
       assert circuit_breaker.state == :closed
     end
   end

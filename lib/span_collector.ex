@@ -168,9 +168,9 @@ defmodule DDTrace.SpanCollector do
             new_state = reset_circuit_failure(state)
             {:ok, new_state}
 
-          {:error, reason} ->
+          {:error, reason, failed_spans} ->
             Logger.warning("Circuit Breaker recovery failed: #{inspect(reason)}")
-            failed_state = handle_send_failure(batch, state)
+            failed_state = handle_send_failure(failed_spans, state)
             {:error, failed_state}
         end
     end
@@ -187,9 +187,9 @@ defmodule DDTrace.SpanCollector do
             new_state = reset_circuit_failure(state)
             {:ok, new_state}
 
-          {:error, reason} ->
+          {:error, reason, failed_spans} ->
             Logger.warning("Failed to send batch: #{inspect(reason)}")
-            failed_state = handle_send_failure(batch, state)
+            failed_state = handle_send_failure(failed_spans, state)
             {:error, failed_state}
         end
     end
@@ -291,7 +291,7 @@ defmodule DDTrace.SpanCollector do
     try do
       case @agent_api_module.send_traces(spans) do
         {:ok, _response} -> :ok
-        {:error, reason} -> {:error, reason}
+        {:error, reason, failed_spans} -> {:error, reason, failed_spans}
       end
     rescue
       error ->
