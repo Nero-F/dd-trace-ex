@@ -168,7 +168,7 @@ defmodule DDTrace.Tracer do
     case ctx.span_stack do
       [direct_ancestor | rest] ->
         trace_id = split_128_bits_id(ctx.trace_id)
-        duration = ctx.start - System.system_time(:nanosecond)
+        duration = (ctx.start - System.system_time(:nanosecond)) |> abs()
 
         current_min_span = ctx.current_span
 
@@ -212,7 +212,7 @@ defmodule DDTrace.Tracer do
   def stop(ctx) do
     # Checking for unfinished spans
     trace_id = split_128_bits_id(ctx.trace_id)
-    duration = ctx.root_span.start - System.system_time(:nanosecond)
+    duration = (ctx.root_span.start - System.system_time(:nanosecond)) |> abs()
 
     ctx.span_stack
     |> Enum.reverse()
@@ -223,7 +223,6 @@ defmodule DDTrace.Tracer do
         min_span.opts.meta ||
           %{}
           |> Map.put("auto_closed", "true")
-          |> IO.inspect(label: "meta")
 
       min_span = %{min_span | opts: Map.put(min_span.opts, :meta, updated_meta)}
 
