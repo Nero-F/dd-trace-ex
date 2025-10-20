@@ -56,6 +56,9 @@ defmodule DDTrace.Tracer do
     case Ctx.get_current() do
       nil ->
         start_new_trace(name, opts)
+
+      ctx ->
+        ctx
     end
   end
 
@@ -120,9 +123,12 @@ defmodule DDTrace.Tracer do
     start_tt = DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
 
     parent_id =
-      case ctx.span_stack do
-        [] -> ctx.root_span.span_id
-        [parent | _] -> parent.span_id
+      cond do
+        ctx.root_span.span_id == ctx.current_span.span_id && ctx.span_stack == [] ->
+          ctx.root_span.span_id
+
+        ctx.root_span.span_id != ctx.current_span.span_id ->
+          ctx.current_span.span_id
       end
 
     new_span = %MinSpan{
@@ -168,14 +174,14 @@ defmodule DDTrace.Tracer do
     case ctx.span_stack do
       [direct_ancestor | rest] ->
         trace_id = split_128_bits_id(ctx.trace_id)
-        duration = (ctx.start - System.system_time(:nanosecond)) |> abs()
 
         current_min_span = ctx.current_span
+        duration = (current_min_span.start - System.system_time(:nanosecond)) |> abs()
 
         span = Span.build_from_minimal(current_min_span, trace_id, duration)
 
         :ok = SpanCollector.add_span(span)
-        new_ctx = %{ctx | current_min_span: direct_ancestor || ctx.root_span, span_stack: rest}
+        new_ctx = %{ctx | current_span: direct_ancestor || ctx.root_span, span_stack: rest}
         Ctx.set(new_ctx)
 
       [] ->
