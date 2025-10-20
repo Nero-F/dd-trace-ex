@@ -28,7 +28,7 @@ defmodule DDTrace.AgentAPI do
           :put,
           "#{agent_url}/v0.3/traces",
           @headers,
-          spans |> Jason.encode!()
+          [spans] |> Jason.encode!()
         )
         |> Finch.request(DDFinch)
 
