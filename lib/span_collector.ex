@@ -5,7 +5,7 @@ defmodule DDTrace.SpanCollector do
 
   alias DDTrace.Span
 
-  @agent_api_module Application.compile_env!(:dd_trace_ex, :agent_api_module)
+  @agent_api_module Application.compile_env(:dd_trace_ex, :agent_api_module, DDTrace.AgentAPI)
 
   @default_config [
     flush_interval: 5,
@@ -295,7 +295,7 @@ defmodule DDTrace.SpanCollector do
       end
     rescue
       error ->
-        {:error, error}
+        {:error, error, spans}
     end
   end
 end

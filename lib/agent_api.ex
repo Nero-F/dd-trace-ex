@@ -10,7 +10,7 @@ end
 defmodule DDTrace.AgentAPI do
   @behaviour DDTrace.AgentAPI.Behaviour
 
-  @default_agent_url Application.compile_env(:dd_trace_ex, :agent_url)
+  @default_agent_url Application.compile_env(:dd_trace_ex, :agent_url, "http://localhost:8126")
 
   @headers [
     {"Content-Type", "application/json"},

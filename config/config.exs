@@ -30,21 +30,23 @@ config :dd_trace_ex,
   runtime_metrics_enable: System.get_env("DD_RUNTIME_METRICS_ENABLE") |> parse_bool.(false),
 
   # Traces
-  apm_tracing_enabled: System.get_env("DD_APM_TRACING_ENABLED") |> parse_bool.(true),
-  trace_enabled: System.get_env("DD_TRACE_ENABLED") |> parse_bool.(true),
-  logs_injection: System.get_env("DD_LOGS_INJECTION") |> parse_bool.(true),
+  # apm_tracing_enabled: System.get_env("DD_APM_TRACING_ENABLED") |> parse_bool.(true),
+  trace_enabled?: System.get_env("DD_TRACE_ENABLED") |> parse_bool.(true),
   trace_rate_limit: System.get_env("DD_TRACE_RATE_LIMIT", "100") |> String.to_integer(),
   trace_header_tags: System.get_env("DD_TRACE_HEADER_TAGS", nil),
   trace_sample_rate: System.get_env("DD_TRACE_SAMPLE_RATE", "-1") |> String.to_integer(),
   trace_sampling_rules: System.get_env("DD_TRACE_SAMPLING_RULES", nil),
   # trace_obfuscation_query_string_regexp: System.get_env("DD_TRACE_OBFUSCATION_QUERY_STRING_REGEXP", default_trace_obfuscation_query_string_regexp),
-  trace_128_bit_traceid_generation_enabled:
+  trace_128_bit_traceid_generation_enabled?:
     System.get_env("DD_TRACE_128_BIT_TRACEID_GENERATION_ENABLED") |> parse_bool.(true),
-  trace_128_bit_traceid_logging_enabled:
+  trace_128_bit_traceid_logging_enabled?:
     System.get_env("DD_TRACE_128_BIT_TRACEID_LOGGING_ENABLED") |> parse_bool.(true),
-  trace_client_ip_enabled: System.get_env("DD_TRACE_CLIENT_IP_ENABLED") |> parse_bool.(true),
-  trace_experimental_features_enabled:
+  trace_client_ip_enabled?: System.get_env("DD_TRACE_CLIENT_IP_ENABLED") |> parse_bool.(true),
+  trace_experimental_features_enabled?:
     System.get_env("DD_TRACE_EXPERIMENTAL_FEATURES_ENABLED", nil),
+
+  # Serverless
+  logs_injection: System.get_env("DD_LOGS_INJECTION") |> parse_bool.(true),
 
   # Integration
   # DD_TRACE_<INTEGRATION>_ENABLED
@@ -52,7 +54,7 @@ config :dd_trace_ex,
     System.get_env("DD_TRACE_HTTP_CLIENT_ERROR_STATUSES", "400-499"),
   trace_http_server_error_statuses:
     System.get_env("DD_TRACE_HTTP_SERVER_ERROR_STATUSES", "500-599"),
-  trace_http_client_tag_query_string:
+  trace_http_client_tag_query_string?:
     System.get_env("DD_TRACE_HTTP_CLIENT_TAG_QUERY_STRING") |> parse_bool.(true),
   trace_client_ip_header: System.get_env("DD_TRACE_CLIENT_IP_HEADER", nil),
 

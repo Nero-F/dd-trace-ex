@@ -17,7 +17,7 @@ defmodule DDTrace.Tracer do
   @spec gen_id(boolean) :: integer()
   defp gen_id(force_64 \\ false) do
     if force_64 == false and
-         Application.fetch_env!(:dd_trace_ex, :trace_128_bit_traceid_generation_enabled) == true do
+         Application.get_env(:dd_trace_ex, :trace_128_bit_traceid_generation_enabled?, true) do
       :crypto.strong_rand_bytes(16)
     else
       :crypto.strong_rand_bytes(8)
@@ -91,7 +91,7 @@ defmodule DDTrace.Tracer do
 
   This is a shorter version of `start_span/3`.
   """
-  @spec start_span(String.t(), SpanOpts.t()) :: :ok
+  @spec start_span(String.t(), SpanOpts.t()) :: Ctx.t()
   def start_span(name, opts \\ %SpanOpts{}) do
     opts = check_span_options(opts)
 
@@ -104,8 +104,6 @@ defmodule DDTrace.Tracer do
       ctx ->
         start_span(ctx, name, opts)
     end
-
-    :ok
   end
 
   @spec start_span(Ctx.t(), String.t(), SpanOpts.t()) :: Ctx.t()
