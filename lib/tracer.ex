@@ -41,6 +41,46 @@ defmodule DDTrace.Tracer do
   # End Helper functions
   # ********************
 
+  defmacro __using__(_opts) do
+    quote do
+      import unquote(__MODULE__)
+    end
+  end
+
+  @doc """
+  Block based macro.
+  Encapsulate a block inside a trace
+
+  ## Options
+  * `:service` - The service name (defaults to app name).
+  * `:resource` - The resource name.
+  * `:type` - The span type (:web, :db, :cache, :custom).
+  """
+  defmacro trace(name, opts \\ %SpanOpts{}, do: block) do
+    quote do
+      ctx = start(unquote(name), unquote(opts))
+      unquote(block)
+      stop(ctx)
+    end
+  end
+
+  @doc """
+  Block based macro.
+  Encapsulate a block inside a span
+
+  ## Options
+  * `:service` - The service name (defaults to app name).
+  * `:resource` - The resource name.
+  * `:type` - The span type (:web, :db, :cache, :custom).
+  """
+  defmacro add_span(name, opts \\ %SpanOpts{}, do: block) do
+    quote do
+      ctx = start_span(unquote(name), unquote(opts))
+      unquote(block)
+      finish_span(ctx)
+    end
+  end
+
   @doc """
   Start a new trace.
 
