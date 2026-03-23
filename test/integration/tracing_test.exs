@@ -76,10 +76,6 @@ defmodule TracingTest do
       [parent_span | _rest] = current_ctx.span_stack
       assert current_ctx.current_span.parent_id == parent_span.span_id
 
-      Tracer.finish_span()
-      Tracer.finish_span()
-      Tracer.finish_span()
-
       Tracer.stop()
     end
 
@@ -98,6 +94,37 @@ defmodule TracingTest do
       assert current_ctx.current_span.parent_id == current_ctx.root_span.span_id
 
       Tracer.finish_span()
+
+      Tracer.stop()
+    end
+
+    test "SpanOptions are inherted from root span" do
+      root_span = Tracer.start("trace", resource: "RES1", service: "TEST").root_span
+      child_span = Tracer.start_span("spans1").current_span
+
+      assert root_span.opts == child_span.opts
+
+      Tracer.finish_span()
+
+      child_span2 = Tracer.start_span("spans2").current_span
+
+      assert root_span.opts.resource == "RES1"
+      assert root_span.opts.service == "TEST"
+      assert root_span.opts == child_span2.opts
+
+      Tracer.finish_span()
+
+      Tracer.stop()
+    end
+
+    @tag run: true
+    test "SpanOptions can be inserted in child span" do
+      Tracer.start("trace", resource: "RES1", service: "TEST")
+      span1 = Tracer.start_span("spans1").current_span
+      span2 = Tracer.start_span("spans2", resource: "RES2").current_span
+
+      assert span1.opts.service == span2.opts.service
+      assert span1.opts.resource != span2.opts.resource
 
       Tracer.stop()
     end

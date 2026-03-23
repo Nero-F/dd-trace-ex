@@ -31,10 +31,24 @@ defmodule DDTrace.Tracer do
     {highest, lowest}
   end
 
-  defp check_span_options(%SpanOpts{} = opts), do: opts
+  defp check_span_options(%SpanOpts{} = opts) do
+    %SpanOpts{
+      service: opts.service || Application.get_env(:dd_trace_ex, :service),
+      resource: opts.resource || Application.get_env(:dd_trace_ex, :resource)
+    }
+  end
 
   defp check_span_options(opts) when is_list(opts) or is_map(opts) do
     struct!(SpanOpts, opts)
+  end
+
+  defp merge_span_options_ctx(opts, ctx) do
+    ctx_opts = ctx.current_span.opts
+
+    %SpanOpts{
+      service: opts.service || ctx_opts.service,
+      resource: opts.resource || ctx_opts.resource
+    }
   end
 
   # ********************
@@ -156,7 +170,7 @@ defmodule DDTrace.Tracer do
 
   """
   def start_span(ctx, name, opts) do
-    opts = check_span_options(opts)
+    opts = merge_span_options_ctx(opts, ctx)
     span_id = gen_id(true)
     start_tt = DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
 
@@ -183,7 +197,7 @@ defmodule DDTrace.Tracer do
 
     Ctx.set(new_ctx)
     Logger.debug("Started span #{name} with id #{span_id}")
-    ctx
+    new_ctx
   end
 
   @doc """
